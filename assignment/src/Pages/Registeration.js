@@ -1,5 +1,5 @@
 "use client";
-import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+
 import {
   Button,
   Flex,
@@ -15,47 +15,52 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
-import { FcGoogle } from "react-icons/fc";
-import { signInWithPopup } from "firebase/auth";
-import { auth, provider } from "./firebase";
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { Link, Navigate, redirect } from "react-router-dom";
+
+export default function Register() {
+  const [register, setRegister] = useState({ email: "", password: "" });
   const [show, setShow] = useState(false);
   const toast = useToast();
-
-  const handleGoogleSignIn = async () => {
-    let res = await signInWithPopup(auth, provider);
-    localStorage.setItem("login", JSON.stringify({ email: res.user.email }));
-    console.log("Logged in:", res.user.email);
-    return (window.location.href = "/");
+  const onchange = (e) => {
+    const { name, value } = e.target;
+    setRegister({ ...register, [name]: value });
   };
   let getregister = JSON.parse(localStorage.getItem("register")) || [];
-  const login = () => {
-    let detail = getregister.find(
-      (el) => el.email === email && el.password === password
-    );
-    if (detail) {
-      localStorage.setItem("login", JSON.stringify({ email, password }));
+  const registered = () => {
+    let alreadexist = getregister.find((el) => el.email === register.email);
+    if (alreadexist) {
       toast({
-        title: "Successfully Login",
-        description: "Congrats,You are successfully logged In",
+        title: "Account Aleardy Exist",
+        description: "This email already register. Please login your account",
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+      return (window.location.href = "/login");
+    } else if (register.password.length >= 8) {
+      getregister.push(register);
+      localStorage.setItem("register", JSON.stringify(getregister));
+      toast({
+        title: "Account created.",
+        description: "We've created your account for you.",
         status: "success",
         duration: 9000,
         isClosable: true,
       });
-      return (window.location.href = "/");
+      setRegister({ email: "", password: "" });
+      return (window.location.href = "/login");
     } else {
       toast({
-        title: "Account Does not exist",
-        description: "Please create your account",
-        status: "error",
+        title: "Password",
+        description: "Password should be atleast 8 Characters",
+        status: "info",
         duration: 9000,
         isClosable: true,
       });
     }
   };
+  console.log(register, getregister);
   return (
     <Flex
       minH={"100vh"}
@@ -74,15 +79,17 @@ export default function Login() {
         my={12}
       >
         <Heading lineHeight={1.1} fontSize={{ base: "2xl", md: "3xl" }}>
-          Login
+          Create new Account
         </Heading>
         <FormControl id="email" isRequired>
           <FormLabel>Email address</FormLabel>
           <Input
+            name="email"
+            value={register?.email}
             placeholder="your-email@example.com"
             _placeholder={{ color: "gray.500" }}
             type="email"
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={onchange}
           />
         </FormControl>
         <FormControl id="password" isRequired>
@@ -90,7 +97,9 @@ export default function Login() {
           <InputGroup>
             <Input
               type={show ? "text" : "password"}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              onChange={onchange}
+              minLength={8}
             />
             <InputRightElement h={"full"}>
               <Button
@@ -109,23 +118,19 @@ export default function Login() {
             _hover={{
               bg: "blue.500",
             }}
-            onClick={login}
+            onClick={registered}
           >
-            Login
+            Register
           </Button>
         </Stack>
         <Stack pt={6}>
           <Text align={"center"}>
-            New User ?{" "}
-            <Link to="/register" style={{ color: "#099ded" }}>
-              Register
+            Already a User ?{" "}
+            <Link to="/login" style={{ color: "#099ded" }}>
+              Login
             </Link>
           </Text>
         </Stack>
-        <Button onClick={handleGoogleSignIn}>
-          <Text>LogIn With </Text>
-          <FcGoogle />
-        </Button>
       </Stack>
     </Flex>
   );
